@@ -1,39 +1,42 @@
-# WEEK 12: BASIC DATA INDEXING FOR RAG
-# Install:
-# pip install langchain langchain-community langchain-openai faiss-cpu pypdf
- 
+# 1. Install dependencies
+!pip install -q langchain langchain-community langchain-huggingface sentence-transformers faiss-cpu
+
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
- 
+
 print("===== WEEK 12: BASIC DATA INDEXING FOR RAG =====")
- 
+
+# 2. Automatically generate sample.txt
+sample_content = """Retrieval-Augmented Generation (RAG) is an AI framework that retrieves facts from an external knowledge base to ground large language models (LLMs) on the most accurate, up-to-date information.
+
+In RAG, external data is converted into vector representations using embedding models. These vector embeddings are indexed in a vector store like FAISS or Chroma. When a user submits a query, the system retrieves relevant chunks based on semantic similarity and feeds them into the prompt sent to the LLM.
+"""
+
+with open("sample.txt", "w", encoding="utf-8") as f:
+    f.write(sample_content)
+
+# 3. Load the document
 loader = TextLoader("sample.txt", encoding="utf-8")
 documents = loader.load()
- 
-print("\nDocument loaded successfully.")
- 
+print("Document loaded successfully.")
+
+# 4. Split into chunks
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=500,
     chunk_overlap=50
 )
- 
 chunks = text_splitter.split_documents(documents)
- 
 print("Number of chunks:", len(chunks))
- 
-embeddings = OpenAIEmbeddings(
-    api_key="YOUR_OPENAI_API_KEY"
-)
- 
-vector_store = FAISS.from_documents(
-    chunks,
-    embeddings
-)
- 
+
+# 5. Free local embeddings (no API key required)
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+# 6. Index into FAISS
+vector_store = FAISS.from_documents(chunks, embeddings)
 print("Vector database created successfully.")
- 
+
+# 7. Save index locally
 vector_store.save_local("faiss_index")
- 
 print("FAISS index saved successfully.")
